@@ -1,0 +1,49 @@
+---
+# a unix path-friendly name (IE, no spaces or special characters)
+project_name: django_hello
+
+# the base path to install to. You should not need to change this.
+install_root: /srv
+
+wsgi_module: hello.wsgi
+
+# any directories that need to be added to the PYTHONPATH.
+pythonpath: "{{ install_root }}/{{ project_name }}/hello/apps"
+
+# the git repository URL for the project
+project_repo: git@github.com:technivore/django-hello-world.git
+    
+# a private key that has access to the repository URL
+ssh_private_key: ~/.ssh/id_rsa
+
+# The value of your django project's STATIC_ROOT settings.
+# This will be the directory that django's `collectstatic` management command
+# copies static files to, and it must be an absolute path. The default value 
+# here assumes that STATIC_ROOT is set in your settings.py like so:
+# STATIC_ROOT = os.path.abspath(os.path.join(BASE_DIR, 'static'))
+static_root: "{{ install_root }}/{{ project_name }}/static"
+
+# the dns name or names (space separated) for your server
+server_name: django-hello.com www.django-hello.com
+
+db_name: hello
+db_user: hello
+db_password: changeme
+
+# apt packages, you should not need to change this unless you have packages
+# listed in your requirements.txt that depend on system packages.
+system_packages:
+  - git
+  - nginx
+  - gunicorn
+  - postgresql
+  - postgresql-server-dev-all
+  - python-pip
+  - python-dev
+  - python-psycopg2
+
+#ips
+ip: "10.0.0.2/18"
+mygateway: "10.0.0.1/18"
+
+# vim:ft=ansible:

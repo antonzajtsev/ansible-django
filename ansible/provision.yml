@@ -1,0 +1,72 @@
+---
+- hosts: servers
+  vars_files:
+    - vars.yml
+  gather_facts: false
+  become: yes
+
+  tasks:
+    - name: "Configuring eth"
+      nmcli:
+        conn_name: "System eth0"
+        ifname: eth0
+        type: ethernet
+        state: present
+        autoconnect: yes
+        ip4: "{{ ip }}"
+        gw4: "{{ mygateway }}"
+
+    - name: Install ufw
+      apt: package=ufw state=present
+    
+    - name: Configure ufw defaults
+      ufw: direction={{ item.direction }} policy={{ item.policy }}
+      with_items:
+        - { direction: 'incoming', policy: 'deny' }
+        - { direction: 'outgoing', policy: 'allow' }
+      notify:
+        - restart ufw
+    
+    - name: Configure ufw rules
+      ufw: rule={{ item.rule }} port={{ item.port }} proto={{ item.proto }}
+      with_items:
+        - { rule: 'allow', port: '22', proto: 'tcp' }
+        - { rule: 'allow', port: '80', proto: 'tcp' }
+      notify:
+        - restart ufw
+    
+    - name: Enable ufw logging
+      ufw: logging=on
+      notify:
+        - restart ufw
+    
+    - name: Enable ufw
+      ufw: state=enabled
+        ￼
+    - name: Install system packages
+      apt: pkg={{ item }} update-cache=yes
+      with_items: "{{ system_packages }}"
+
+    - name: Save ssh key to server
+      copy: src={{ ssh_private_key }} dest=/root/.ssh/id_rsa mode=600
+
+    - name: Create directory for app
+      file: path={{ install_root }}/{{ project_name }} state=directory
+
+    - name: make sure postgresql server is running
+      service: name=postgresql state=started
+
+    - name: create database
+      become_user: postgres
+      postgresql_db: name={{ db_name }}
+
+    - name: create database user
+      become_user: postgres
+      postgresql_user: db={{ db_name }} name={{ db_user }} password={{ db_password }} priv=ALL
+
+    - name: remove default nginx site
+      file: path=/etc/nginx/sites-enabled/default state=absent
+
+- include: deploy.yml
+
+# vim:ft=ansible:
